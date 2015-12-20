@@ -1,0 +1,59 @@
+@font-face {
+  font-family: 'varela-round';
+  src: url('http://files.martijnbrekelmans.com/cdn/VarelaRound-Regular.otf');
+}
+
+body {
+    background-color: rgb(233, 234, 237);
+}
+
+.note {
+    transition: border-color 1.4s cubic-bezier(1, .01, 1, .64);
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background-color: transparent;
+    padding: 4px;
+}
+
+/* Make the note data fit well */
+.note > .note-content > * {
+    margin: 0;
+}
+
+html:hover .note {
+    transition: border-color .2s ease;
+    border: 1px solid #888;
+}
+
+html {
+    position: absolute;
+    overflow: hidden;
+}
+
+.menu {
+    border-bottom: 1px solid #888;
+    border-left: 1px solid #888;
+    border-right: 1px solid #888;
+    border-radius: 3px;
+    padding: 4px;
+}
+
+/* TRANSCLUSION START */
+.transcludeVariable {
+    margin: 4px 1.5px;
+    transition: box-shadow .1s ease;
+    text-align: center;
+    display: inline-block;
+    font-family: 'varela-round';
+    border-radius: 7.5px;
+    color: white;
+    font-size: 16px;
+    background-color: rgb(96, 159, 230);
+    box-shadow: 0 0 3px gray inset;
+    padding: 2px 6px;
+}
+
+.transcludeVariable:hover {
+    cursor: pointer;
+}
+/* TRANSCLUSION END */
