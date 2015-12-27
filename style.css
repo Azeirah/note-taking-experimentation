@@ -20,7 +20,8 @@ body {
     margin: 0;
 }
 
-html:hover .note {
+html:hover .note,
+html:hover .transcludeVariable {
     transition: border-color .2s ease;
     border: 1px solid #888;
 }
