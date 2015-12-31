@@ -41,8 +41,8 @@ function initializeCanvas() {
     document.body.appendChild(canvas);
 
     // create an offscreen canvas to render chunks on
-    var offscreenRenderCanvas    = document.createElement("canvas");
-    offscreenRenderCanvas.width  = configuration.chunkWidth;
+    var offscreenRenderCanvas = document.createElement("canvas");
+    offscreenRenderCanvas.width = configuration.chunkWidth;
     offscreenRenderCanvas.height = configuration.chunkHeight;
 
     return {
@@ -68,6 +68,7 @@ function initializeWorld(drawing) {
     function constructChunkKey(x, y) {
         return x.toString() + ", " + y.toString();
     }
+
     function parseChunkKey(key) {
         var split = key.split(", ");
 
@@ -86,6 +87,7 @@ function initializeWorld(drawing) {
             y: Math.floor(y / configuration.chunkHeight)
         };
     }
+
     function chunkCoordToWorldCoord(x, y) {
         return {
             x: x * configuration.chunkWidth,
@@ -100,6 +102,7 @@ function initializeWorld(drawing) {
             y: (y * configuration.chunkHeight) - world.position.y
         };
     }
+
     function renderCoordToChunkCoord(x, y) {
         // takes a point relative to the canvas, returns the coord of the chunk it's in
         return {
@@ -128,15 +131,15 @@ function initializeWorld(drawing) {
         return world.chunks[chunkKey];
     }
 
-    window.addEventListener("resize", function (event) {
-        world.width  = Math.max(drawing.canvas.width, world.width);
+    window.addEventListener("resize", function(event) {
+        world.width = Math.max(drawing.canvas.width, world.width);
         world.height = Math.max(drawing.canvas.height, world.height);
     });
 
     function renderChunks(chunks) {
         var coords = Object.keys(chunks).map(parseChunkKey);
 
-        coords.forEach(function (coord) {
+        coords.forEach(function(coord) {
             var chunk = getChunk(coord.x, coord.y);
             var renderCoordinate = chunkCoordToRenderCoord(coord.x, coord.y);
 
@@ -144,15 +147,15 @@ function initializeWorld(drawing) {
         });
     }
 
-    function getChunksInViewport () {
+    function getChunksInViewport() {
         var chunksInViewport = {};
 
         // we need to figure out what chunks are in the viewport
         // what we need to do is find the coordinates of the chunks in the four corners
         // and then retrieve those chunks, as well as all chunks inbetween those corners
-        var topLeft     = worldCoordToChunkCoord(world.position.x                       , world.position.y);
+        var topLeft     = worldCoordToChunkCoord(world.position.x, world.position.y);
         var topRight    = worldCoordToChunkCoord(world.position.x + drawing.canvas.width, world.position.y);
-        var bottomLeft  = worldCoordToChunkCoord(world.position.x                       , world.position.y + drawing.canvas.height);
+        var bottomLeft  = worldCoordToChunkCoord(world.position.x, world.position.y + drawing.canvas.height);
         var bottomRight = worldCoordToChunkCoord(world.position.x + drawing.canvas.width, world.position.y + drawing.canvas.height);
 
         var chunksOnXAxis = Math.abs(topRight.x - topLeft.x);
@@ -183,18 +186,27 @@ function initializeWorld(drawing) {
         // at least one of its four corners lie OUTSIDE the viewport
         // the way I compute it feels a little awkward, lol
         var chunkCoords = Object.keys(chunksInViewport).map(parseChunkKey);
-        var clippingChunkCoords = chunkCoords.map(function (coord) {return chunkCoordToRenderCoord(coord.x, coord.y)}).filter(function (coord) {
-            var inside  = false;
+        var clippingChunkCoords = chunkCoords.map(function(coord) {
+            return chunkCoordToRenderCoord(coord.x, coord.y)
+        }).filter(function(coord) {
+            var inside = false;
             var outside = false;
 
             // the four points
-            [
-                {x: coord.x,                            y: coord.y},
-                {x: coord.x + configuration.chunkWidth, y: coord.y},
-                {x: coord.x,                            y: coord.y + configuration.chunkHeight},
-                {x: coord.x + configuration.chunkWidth, y: coord.y + configuration.chunkHeight}
-            ]
-            .forEach(function (coord) {
+            [{
+                x: coord.x,
+                y: coord.y
+            }, {
+                x: coord.x + configuration.chunkWidth,
+                y: coord.y
+            }, {
+                x: coord.x,
+                y: coord.y + configuration.chunkHeight
+            }, {
+                x: coord.x + configuration.chunkWidth,
+                y: coord.y + configuration.chunkHeight
+            }]
+            .forEach(function(coord) {
                 // for all points, see if they lie inside or outside
                 if (coord.x < 0 || coord.x > drawing.canvas.width || coord.y < 0 || coord.y > drawing.canvas.height) {
                     inside = true;
@@ -209,7 +221,7 @@ function initializeWorld(drawing) {
 
         var clippedChunks = {};
 
-        clippingChunkCoords.forEach(function (renderCoord) {
+        clippingChunkCoords.forEach(function(renderCoord) {
             var c = renderCoordToChunkCoord(renderCoord.x, renderCoord.y);
             clippedChunks[constructChunkKey(c.x, c.y)] = getChunk(c.x, c.y);
         });
@@ -224,18 +236,27 @@ function initializeWorld(drawing) {
         // when is a chunk entirely visible? It's entirely visible when
         // ALL of its corners lie inside the viewport.
         var chunkCoords = Object.keys(chunksInViewport).map(parseChunkKey);
-        var visibleChunkCoords = chunkCoords.map(function (coord) {return chunkCoordToRenderCoord(coord.x, coord.y)}).filter(function (coord) {
-            var inside  = false;
+        var visibleChunkCoords = chunkCoords.map(function(coord) {
+            return chunkCoordToRenderCoord(coord.x, coord.y)
+        }).filter(function(coord) {
+            var inside = false;
             var outside = false;
 
             // the four points
-            [
-                {x: coord.x,                            y: coord.y},
-                {x: coord.x + configuration.chunkWidth, y: coord.y},
-                {x: coord.x,                            y: coord.y + configuration.chunkHeight},
-                {x: coord.x + configuration.chunkWidth, y: coord.y + configuration.chunkHeight}
-            ]
-            .forEach(function (coord) {
+            [{
+                x: coord.x,
+                y: coord.y
+            }, {
+                x: coord.x + configuration.chunkWidth,
+                y: coord.y
+            }, {
+                x: coord.x,
+                y: coord.y + configuration.chunkHeight
+            }, {
+                x: coord.x + configuration.chunkWidth,
+                y: coord.y + configuration.chunkHeight
+            }]
+            .forEach(function(coord) {
                 // for all points, see if they lie inside or outside
                 if (coord.x < 0 || coord.x > drawing.canvas.width || coord.y < 0 || coord.y > drawing.canvas.height) {
                     outside = true;
@@ -250,12 +271,33 @@ function initializeWorld(drawing) {
 
         var visibleChunks = {};
 
-        visibleChunkCoords.forEach(function (renderCoord) {
+        visibleChunkCoords.forEach(function(renderCoord) {
             var c = renderCoordToChunkCoord(renderCoord.x, renderCoord.y);
             visibleChunks[constructChunkKey(c.x, c.y)] = getChunk(c.x, c.y);
         });
 
         return visibleChunks;
+    }
+
+    function chunkUpdate(from, width, height, to, chunk, key) {
+        // this function is very expensive!
+        // 4x a fairly expensive operation
+        //
+        // the second and third step /can/ be replaced by calling
+        // ctx.drawImage, it is /a lot/ more performant
+        // but has one enormous drawback, if you draw an anti-aliased line over and over again
+        // on the same canvas, the partially transparent edges will add-up and you end up
+        // with a thick pixelated line :( very ugly effect
+        // I'm not sure if it can be prevented or not.
+
+        // ..simply load the chunk into the render context, nothing special here
+        drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
+        // ..now get the corresponding data from the canvas
+        var visibleData = drawing.ctx.getImageData(from.x, from.y, width, height);
+        // ..put the retrieved data inside a storage chunk, take the clipping into account
+        drawing.offscreenRenderCtx.putImageData(visibleData, to.x, to.y);
+        // ..overwrite the storage chunk to the just rendered one
+        world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
     }
 
     world.updateChunks = function () {
@@ -292,179 +334,97 @@ function initializeWorld(drawing) {
             var width  = D.x - A.x;
             var height = D.y - A.y;
 
-            // console.log(width, height, configuration.chunkWidth, configuration.chunkHeight);
-
             // don't attempt to update chunks that are not even visible on the canvas! :o
             if (width <= 0 || height <= 0) return;
 
-            // console.log(A.x, world.position.x % configuration.chunkWidth, A.x + (world.position.x % configuration.chunkWidth) % configuration.chunkWidth);
-
-            // if (width < configuration.chunkWidth || height < configuration.chunkHeight) {
-            //     drawing.ctx.fillStyle = "rgba(20, 250, 200, .3)";
-            //     console.log(A, D, width, height);
-            //     drawing.ctx.fillRect(A.x, A.y, width, height);
-            // } else {
-            //     drawing.ctx.fillStyle = "white";
-            //     drawing.ctx.fillRect(A.x, A.y, width, height);
-            // }
-            //
-            // de bug komt alleen voor bij
-            // negatieve geclipte chunks aan de linkerkant OF bovenkant van het scherm
-            // dus niet aan de onder- of rechterkant, en alleen wanneer de corresponderende x of y coordinaat negatief is
-            //
-
-            // ..simply load the chunk into the render context, nothing special here
-            drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
-            // ..now get the corresponding data from the canvas
-            var visibleData = drawing.ctx.getImageData(A.x, A.y, width, height);
-
-            var chunkCoord = chunkCoordToWorldCoord(coord.x, coord.y);
             var putLocation = {
-                x: 0,
-                y: 0,
-                // x: Math.constrain(world.position.x, chunkCoord.x, chunkCoord.x + configuration.chunkWidth) - world.position.x,
-                // y: Math.constrain(world.position.y, chunkCoord.y, chunkCoord.y + configuration.chunkHeight) - world.position.y,
+                x: configuration.chunkWidth - width,
+                y: configuration.chunkHeight - height
             };
 
-            if (chunkCoord.x >= world.position.x && chunkCoord.x < world.position.x + configuration.chunkWidth) {
-                putLocation.y = world.position.y % configuration.chunkHeight;
+            var chunkWorldCoord = chunkCoordToWorldCoord(coord.x, coord.y);
+            var canvas_A = {
+                x: world.position.x,
+                y: world.position.y
+            };
+
+            var canvas_D = {
+                x: world.position.x + drawing.canvas.width,
+                y: world.position.y + drawing.canvas.height
+            };
+
+            // bottom-left clipped chunk
+            if (chunkWorldCoord.x <= canvas_A.x &&
+                chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
+                width <= configuration.chunkWidth &&
+                height < configuration.chunkHeight) {
+                putLocation.y = 0;
             }
 
-            // if (width < configuration.chunkWidth) {
-            //     putLocation.x = ;
-            // }
+    	    // mid-bottom clipped chunk
+    	    if (chunkWorldCoord.x > canvas_A.x &&
+        		chunkWorldCoord.y + configuration.chunkHeight > canvas_D.y &&
+        		width === configuration.chunkWidth &&
+        		height < configuration.chunkHeight) {
+        		putLocation.x = 0;
+        		putLocation.y = 0;
+    	    }
 
-            // if (height < configuration.chunkHeight) {
-            //     putLocation.y = configuration.chunkHeight - height;
-            // }
+    	    // bottom-right clipped chunk
+    	    if (chunkWorldCoord.x > canvas_A.x &&
+    	        chunkWorldCoord.y + configuration.chunkHeight > canvas_D.y &&
+        		width < configuration.chunkWidth &&
+        		height < configuration.chunkHeight) {
+                putLocation.x = 0;
+    		    putLocation.y = 0;
+    	    }
 
-            // if (putLocation.x < 0) {
-                drawing.ctx.fillText(JSON.stringify(putLocation) + ", " + width + ", " + height, A.x + width / 2, A.y + height / 2);
-            // }
+    	    // middle-right clipped chunk
+            if (chunkWorldCoord.x > canvas_A.x &&
+        		chunkWorldCoord.y + configuration.chunkHeight < canvas_D.y &&
+        		width < configuration.chunkWidth &&
+        		height === configuration.chunkHeight) {
+                putLocation.x = 0;
+    	        putLocation.y = 0;
+    	    }
 
-            // The error lies somewhere here.... I think
-            drawing.offscreenRenderCtx.putImageData(visibleData, putLocation.x, putLocation.y);
+            // top-right clipped chunk
+            if (chunkWorldCoord.x > canvas_A.x &&
+                chunkWorldCoord.y + configuration.chunkHeight < canvas_D.y &&
+                width < configuration.chunkWidth &&
+                height < configuration.chunkHeight) {
+                putLocation.x = 0;
+            }
 
-            // ..set the chunk to the just rendered one
-            world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
+            chunkUpdate(A, width, height, putLocation, chunk, key);
+
+            // // ..simply load the chunk into the render context, nothing special here
+            // drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
+            // // ..now get the corresponding data from the canvas
+            // var visibleData = drawing.ctx.getImageData(A.x, A.y, width, height);
+            // // ..put the retrieved data inside a storage chunk, take the clipping into account
+            // drawing.offscreenRenderCtx.putImageData(visibleData, putLocation.x, putLocation.y);
+            // // ..overwrite the storage chunk to the just rendered one
+            // world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
         });
+
+        world.moveBy(0, 0);
     };
 
-    // world.updateChunks = function () {
-    //     // the update chunk has a problem with chunks that are partially inside and partially outside the canvas viewport
-    //     // let's assume all our chunks are completely black,
-    //     // now move on of our chunk partially outside the viewport
-    //     // when I call update, this chunk will be overwritten with one that's partially white, where it's outside the canvas viewport!
-    //     // Because the canvas will return 0's for pixels outside its viewport
-    //     // canvas.width = 10
-    //     // canvas.height = 10
-    //     // canvas.fillRect(0, 0, 10, 10)
-    //     // canvas.getImageData(10, 10, 2, 2) -> [black, white,
-    //     //                                       white, white]
-    //     //
-    //     // To solve this, split the viewport chunks into two arrays, those which are entirely visible on the viewport
-    //     // and those that are partially outside the viewport
-    //     //
-    //     // simply overwrite the ones inside the viewport
-    //     // and mutate those that are outside the viewport
-    //     var clippingChunks        = getClippedChunks();
-    //     var entirelyVisibleChunks = getVisibleChunks();
-
-    //     // amount of clipping chunks + amount of visible chunks should equal chunks in viewport at all times!
-    //     if (! (Object.keys(getChunksInViewport()).length === Object.keys(clippingChunks).length + Object.keys(entirelyVisibleChunks).length)) {
-    //         throw Error("The amount of chunks is not equal to clipping chunks + visible chunks");
-    //     }
-
-    //     // first, render all chunks that are entirely visible, there are no complications here
-    //     Object.keys(entirelyVisibleChunks).forEach(function (key) {
-    //         var coord = parseChunkKey(key);
-    //         var renderCoord = chunkCoordToRenderCoord(coord.x, coord.y);
-
-    //         world.chunks[key] = drawing.ctx.getImageData(renderCoord.x, renderCoord.y, configuration.chunkWidth, configuration.chunkHeight);
-    //     });
-
-    //     // next, update the clipped chunks, this is a little more complicated.
-    //     // we need to figure out what pixels are visible, and what pixels aren't.
-    //     // take all visible pixels, and paint them over the existing chunk's pixels
-    //     // leave the other pixels alone.
-    //     //
-    //     // There's a small issue remaining with this, anything that you expect to be painted outside the canvas
-    //     // for example, if you're drawing with a circular brush of 20px at the edge of the screen
-    //     // you will expect that half of the circle will be drawn "just outside" the canvas
-    //     // unfortunately, the canvas buffer doesn't extend outside of the screen, only the chunks do..
-
-    //     // I would prefer to draw directly to the chunks, perhaps that would work better
-    //     // but I don't know how that would work yet :(
-    //     Object.keys(clippingChunks).forEach(function (key) {
-    //         var coord = parseChunkKey(key);
-    //         var renderCoord = chunkCoordToRenderCoord(coord.x, coord.y);
-    //         // I'm very afraid this will be /really/ slow :(, but whatever
-    //         // My proposal for an algorithm
-    //         // 1. Find all points that lay inside the viewport
-    //         // 2. Find the points where the viewport border intersects the chunk
-    //         // 3. Sort the points such that
-    //         // A---------------B
-    //         // |               |
-    //         // |               |
-    //         // |               |
-    //         // |               |
-    //         // C---------------D
-    //         // we can now iterate from A to D, copy those points over to the chunk, this is what I fear will be slow :o
-
-    //         drawing.ctx.strokeRect(renderCoord.x, renderCoord.y, configuration.chunkWidth, configuration.chunkHeight);
-
-    //         var A = {
-    //             x: Math.constrain(renderCoord.x,                             0, drawing.canvas.width),
-    //             y: Math.constrain(renderCoord.y,                             0, drawing.canvas.height)
-    //         };
-    //         var D = {
-    //             x: Math.constrain(renderCoord.x + configuration.chunkWidth,  0, drawing.canvas.width),
-    //             y: Math.constrain(renderCoord.y + configuration.chunkHeight, 0, drawing.canvas.height)
-    //         };
-
-    //         var chunk = clippingChunks[key];
-    //         try {
-    //             var canvasChunk = drawing.ctx.getImageData(A.x, A.y, D.x - A.x, D.y - A.y);
-    //         } catch(error) {
-    //             console.log(`point: (` + A.x + ", " + A.y + ")" + ", width:", D.x - A.x, "height:", D.y - A.y);
-    //             console.log(D.x - A.x, D.y - A.y);
-    //         }
-
-    //         // now that we have the points, we need to iterate over them
-    //         for (var x = A.x; x < D.x; x += 1) {
-    //             for (var y = A.y; y < D.y; y += 1) {
-    //                 // calculate the index in the chunk
-    //                 var index = (x * configuration.chunkWidth + y) * 4;
-    //                 chunk.data[index    ] = canvasChunk.data[index    ];
-    //                 chunk.data[index + 1] = canvasChunk.data[index + 1];
-    //                 chunk.data[index + 2] = canvasChunk.data[index + 2];
-    //                 chunk.data[index + 3] = canvasChunk.data[index + 3];
-    //             }
-    //         }
-
-    //     });
-    // };
-
-    world.moveBy = function (dx, dy, canvas) {
+    world.moveBy = function(dx, dy, canvas) {
         world.position.x += dx;
         world.position.y += dy;
 
         var chunksToRender = getChunksInViewport();
         renderChunks(chunksToRender);
-
-        Object.keys(chunksToRender).map(parseChunkKey).forEach(function (coord) {
-            var renderCoord = chunkCoordToRenderCoord(coord.x, coord.y);
-
-            drawing.ctx.strokeRect(renderCoord.x, renderCoord.y, configuration.chunkWidth, configuration.chunkHeight);
-        });
     };
 
     return world;
 }
 
 function handleMouseEvents(drawing, world) {
-    var ctx     = drawing.ctx;
-    var canvas  = drawing.canvas;
+    var ctx = drawing.ctx;
+    var canvas = drawing.canvas;
 
     function padTheWorld(event) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -478,12 +438,12 @@ function handleMouseEvents(drawing, world) {
         ctx.stroke();
     }
 
-    window.addEventListener("resize", function () {
+    window.addEventListener("resize", function() {
         // moving forces a rerender
         world.moveBy(0, 0);
     });
 
-    canvas.addEventListener("az-drag", function (event) {
+    canvas.addEventListener("az-drag", function(event) {
         if (event.which === MOUSE.middle) {
             padTheWorld(event);
         } else if (event.which === MOUSE.left) {
@@ -492,7 +452,7 @@ function handleMouseEvents(drawing, world) {
     });
 
     // replace with az-dragEnd >:(
-    canvas.addEventListener("mouseup", function (event) {
+    canvas.addEventListener("mouseup", function(event) {
         if (event.which === MOUSE.left) {
             // there's a problem with update chunks, for a chunk it's possible to reside outside the canvas only halfway for example
             // when the canvas tries to update that chunk, it will overwrite his clipped data with 0's, you will lose the clipped data!
@@ -501,7 +461,7 @@ function handleMouseEvents(drawing, world) {
     });
 
     // prevents the annoying scrolling popup thing on middle mouse click
-    window.addEventListener("mousedown", function (event) {
+    window.addEventListener("mousedown", function(event) {
         if (event.which === MOUSE.middle) {
             event.preventDefault();
         }
@@ -514,8 +474,10 @@ var world = initializeWorld(drawing);
 handleMouseEvents(drawing, world);
 
 function findAllNonEmptyChunks() {
-    var keys = Object.keys(world.chunks).filter(function (chunkKey) {
-        return world.chunks[chunkKey].data.reduce(function (d, p) {return d + p}, 0) !== 0;
+    var keys = Object.keys(world.chunks).filter(function(chunkKey) {
+        return world.chunks[chunkKey].data.reduce(function(d, p) {
+            return d + p
+        }, 0) !== 0;
     });
 
     console.log(keys);
