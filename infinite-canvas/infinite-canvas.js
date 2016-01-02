@@ -45,8 +45,11 @@ function initializeCanvas() {
     offscreenRenderCanvas.width = configuration.chunkWidth;
     offscreenRenderCanvas.height = configuration.chunkHeight;
 
+    var ctx = canvas.getContext("2d");
+    ctx.lineWidth = 2;
+
     return {
-        ctx: canvas.getContext("2d"),
+        ctx: ctx,
         canvas: canvas,
         offscreenRenderCanvas: offscreenRenderCanvas,
         offscreenRenderCtx: offscreenRenderCanvas.getContext("2d")
@@ -174,128 +177,14 @@ function initializeWorld(drawing) {
         return chunksInViewport;
     }
 
-
-    // the following two functions are huge, awkward and ugly, they desperately need some rewriting.
-    function getClippedChunks() {
-        // retrieves all chunks that are partially inside and partially outside the viewport
-        var chunksInViewport = getChunksInViewport();
-
-        // when is a chunk clipped? It's clipped when
-        // at least one of its four corners lie INSIDE the viewport
-        // AND
-        // at least one of its four corners lie OUTSIDE the viewport
-        // the way I compute it feels a little awkward, lol
-        var chunkCoords = Object.keys(chunksInViewport).map(parseChunkKey);
-        var clippingChunkCoords = chunkCoords.map(function(coord) {
-            return chunkCoordToRenderCoord(coord.x, coord.y)
-        }).filter(function(coord) {
-            var inside = false;
-            var outside = false;
-
-            // the four points
-            [{
-                x: coord.x,
-                y: coord.y
-            }, {
-                x: coord.x + configuration.chunkWidth,
-                y: coord.y
-            }, {
-                x: coord.x,
-                y: coord.y + configuration.chunkHeight
-            }, {
-                x: coord.x + configuration.chunkWidth,
-                y: coord.y + configuration.chunkHeight
-            }]
-            .forEach(function(coord) {
-                // for all points, see if they lie inside or outside
-                if (coord.x < 0 || coord.x > drawing.canvas.width || coord.y < 0 || coord.y > drawing.canvas.height) {
-                    inside = true;
-                } else {
-                    outside = true;
-                }
-            });
-
-            // return if the chunk has at least one point INSIDE and at least one point OUTSIDE the viewport
-            return inside && outside;
-        });
-
-        var clippedChunks = {};
-
-        clippingChunkCoords.forEach(function(renderCoord) {
-            var c = renderCoordToChunkCoord(renderCoord.x, renderCoord.y);
-            clippedChunks[constructChunkKey(c.x, c.y)] = getChunk(c.x, c.y);
-        });
-
-        return clippedChunks;
-    }
-
-    function getVisibleChunks() {
-        // retrieves all chunks that are entirely visible inside the viewport
-        var chunksInViewport = getChunksInViewport();
-
-        // when is a chunk entirely visible? It's entirely visible when
-        // ALL of its corners lie inside the viewport.
-        var chunkCoords = Object.keys(chunksInViewport).map(parseChunkKey);
-        var visibleChunkCoords = chunkCoords.map(function(coord) {
-            return chunkCoordToRenderCoord(coord.x, coord.y)
-        }).filter(function(coord) {
-            var inside = false;
-            var outside = false;
-
-            // the four points
-            [{
-                x: coord.x,
-                y: coord.y
-            }, {
-                x: coord.x + configuration.chunkWidth,
-                y: coord.y
-            }, {
-                x: coord.x,
-                y: coord.y + configuration.chunkHeight
-            }, {
-                x: coord.x + configuration.chunkWidth,
-                y: coord.y + configuration.chunkHeight
-            }]
-            .forEach(function(coord) {
-                // for all points, see if they lie inside or outside
-                if (coord.x < 0 || coord.x > drawing.canvas.width || coord.y < 0 || coord.y > drawing.canvas.height) {
-                    outside = true;
-                } else {
-                    inside = true;
-                }
-            });
-
-            // return if the chunk's points all lie inside the viewport
-            return inside && !outside;
-        });
-
-        var visibleChunks = {};
-
-        visibleChunkCoords.forEach(function(renderCoord) {
-            var c = renderCoordToChunkCoord(renderCoord.x, renderCoord.y);
-            visibleChunks[constructChunkKey(c.x, c.y)] = getChunk(c.x, c.y);
-        });
-
-        return visibleChunks;
-    }
-
     function chunkUpdate(from, width, height, to, chunk, key) {
-        // this function is very expensive!
-        // 4x a fairly expensive operation
-        //
-        // the second and third step /can/ be replaced by calling
-        // ctx.drawImage, it is /a lot/ more performant
-        // but has one enormous drawback, if you draw an anti-aliased line over and over again
-        // on the same canvas, the partially transparent edges will add-up and you end up
-        // with a thick pixelated line :( very ugly effect
-        // I'm not sure if it can be prevented or not.
-
         // ..simply load the chunk into the render context, nothing special here
         drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
-        // ..now get the corresponding data from the canvas
-        var visibleData = drawing.ctx.getImageData(from.x, from.y, width, height);
-        // ..put the retrieved data inside a storage chunk, take the clipping into account
-        drawing.offscreenRenderCtx.putImageData(visibleData, to.x, to.y);
+        // ..now get the corresponding data from the canvas and put it into the chunk
+        // clear the chunk beforehand, otherwise transparent pixels (anti-aliasing) will accumulate
+        // resulting in ugly thick lines
+        drawing.offscreenRenderCtx.clearRect(to.x, to.y, width, height);
+        drawing.offscreenRenderCtx.drawImage(drawing.canvas, from.x, from.y, width, height, to.x, to.y, width, height);
         // ..overwrite the storage chunk to the just rendered one
         world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
     }
@@ -353,6 +242,14 @@ function initializeWorld(drawing) {
                 y: world.position.y + drawing.canvas.height
             };
 
+            // I know there's a LOT of redundancy down here
+            // I was having an extremely bad time figuring out how to deal with the clipped chunks
+            // in all cases, and I'm 100% certain I've missed at least one, but I haven't been able to reproduce it
+            // at some point, the bottom-right clipping chunk was glitching out because of bad putLocation values
+            //
+            // I first want to make sure that all cases are covered, when I did that, I can get rid of all the
+            // heavily unnecessary redundancy here
+
             // bottom-left clipped chunk
             if (chunkWorldCoord.x <= canvas_A.x &&
                 chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
@@ -397,15 +294,6 @@ function initializeWorld(drawing) {
             }
 
             chunkUpdate(A, width, height, putLocation, chunk, key);
-
-            // // ..simply load the chunk into the render context, nothing special here
-            // drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
-            // // ..now get the corresponding data from the canvas
-            // var visibleData = drawing.ctx.getImageData(A.x, A.y, width, height);
-            // // ..put the retrieved data inside a storage chunk, take the clipping into account
-            // drawing.offscreenRenderCtx.putImageData(visibleData, putLocation.x, putLocation.y);
-            // // ..overwrite the storage chunk to the just rendered one
-            // world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
         });
 
         world.moveBy(0, 0);
