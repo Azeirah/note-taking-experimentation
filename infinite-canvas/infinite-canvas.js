@@ -1,10 +1,3 @@
-// I want to make an infinite canvas with the following properties
-// 1. The drawn data should persist on the server
-// 2. Truly infinite, no borders, not "large enough" either
-// 3. Smooth performance
-
-// idea, let's split it up into chunks, each chunk has a width and a height, let's say 384x216 for example
-
 var configuration = {
     chunkWidth: 384,
     chunkHeight: 216
@@ -15,13 +8,6 @@ Math.constrain = function constrain(value, minimum, maximum) {
     if (value < minimum) return minimum;
     if (value > maximum) return maximum;
     return value;
-}
-
-// too simple assertion function
-function assert(predicate, message) {
-    if (!predicate) {
-        console.log("Predicate did not hold true,", message);
-    }
 }
 
 function fitCanvasToScreen(canvas) {
@@ -41,8 +27,8 @@ function initializeCanvas() {
     document.body.appendChild(canvas);
 
     // create an offscreen canvas to render chunks on
-    var offscreenRenderCanvas = document.createElement("canvas");
-    offscreenRenderCanvas.width = configuration.chunkWidth;
+    var offscreenRenderCanvas    = document.createElement("canvas");
+    offscreenRenderCanvas.width  = configuration.chunkWidth;
     offscreenRenderCanvas.height = configuration.chunkHeight;
 
     var ctx = canvas.getContext("2d");
@@ -177,18 +163,6 @@ function initializeWorld(drawing) {
         return chunksInViewport;
     }
 
-    function chunkUpdate(from, width, height, to, chunk, key) {
-        // ..simply load the chunk into the render context, nothing special here
-        drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
-        // ..now get the corresponding data from the canvas and put it into the chunk
-        // clear the chunk beforehand, otherwise transparent pixels (anti-aliasing) will accumulate
-        // resulting in ugly thick lines
-        drawing.offscreenRenderCtx.clearRect(to.x, to.y, width, height);
-        drawing.offscreenRenderCtx.drawImage(drawing.canvas, from.x, from.y, width, height, to.x, to.y, width, height);
-        // ..overwrite the storage chunk to the just rendered one
-        world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
-    }
-
     world.updateChunks = function () {
         // alternative approach, we use a second canvas
         // 1. Create second canvas
@@ -208,7 +182,6 @@ function initializeWorld(drawing) {
             var chunk       = chunks[key];
 
             // the Math.constrain calls are to ensure that we do not overwrite partially clipped chunks with whitespace
-
             // top-left
             var A = {
                 x: Math.constrain(renderCoord.x, 0, drawing.canvas.width),
@@ -223,7 +196,7 @@ function initializeWorld(drawing) {
             var width  = D.x - A.x;
             var height = D.y - A.y;
 
-            // don't attempt to update chunks that are not even visible on the canvas! :o
+            // don't even bother to update chunks that are not even visible on the canvas! :o
             if (width <= 0 || height <= 0) return;
 
             var putLocation = {
@@ -244,7 +217,7 @@ function initializeWorld(drawing) {
 
             // I know there's a LOT of redundancy down here
             // I was having an extremely bad time figuring out how to deal with the clipped chunks
-            // in all cases, and I'm 100% certain I've missed at least one, but I haven't been able to reproduce it
+            // in all cases, and I'm 100% certain I've missed at least one, but I haven't been able to reproduce it.
             // at some point, the bottom-right clipping chunk was glitching out because of bad putLocation values
             //
             // I first want to make sure that all cases are covered, when I did that, I can get rid of all the
@@ -253,14 +226,13 @@ function initializeWorld(drawing) {
             // bottom-left clipped chunk
             if (chunkWorldCoord.x <= canvas_A.x &&
                 chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
-                width <= configuration.chunkWidth &&
                 height < configuration.chunkHeight) {
                 putLocation.y = 0;
             }
 
-    	    // mid-bottom clipped chunk
-    	    if (chunkWorldCoord.x > canvas_A.x &&
-        		chunkWorldCoord.y + configuration.chunkHeight > canvas_D.y &&
+    	    // bottom-mid clipped chunk
+    	    if (chunkWorldCoord.x >= canvas_A.x &&
+        		chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
         		width === configuration.chunkWidth &&
         		height < configuration.chunkHeight) {
         		putLocation.x = 0;
@@ -268,8 +240,8 @@ function initializeWorld(drawing) {
     	    }
 
     	    // bottom-right clipped chunk
-    	    if (chunkWorldCoord.x > canvas_A.x &&
-    	        chunkWorldCoord.y + configuration.chunkHeight > canvas_D.y &&
+    	    if (chunkWorldCoord.x >= canvas_A.x &&
+    	        chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
         		width < configuration.chunkWidth &&
         		height < configuration.chunkHeight) {
                 putLocation.x = 0;
@@ -277,8 +249,8 @@ function initializeWorld(drawing) {
     	    }
 
     	    // middle-right clipped chunk
-            if (chunkWorldCoord.x > canvas_A.x &&
-        		chunkWorldCoord.y + configuration.chunkHeight < canvas_D.y &&
+            if (chunkWorldCoord.x >= canvas_A.x &&
+        		chunkWorldCoord.y + configuration.chunkHeight <= canvas_D.y &&
         		width < configuration.chunkWidth &&
         		height === configuration.chunkHeight) {
                 putLocation.x = 0;
@@ -286,17 +258,22 @@ function initializeWorld(drawing) {
     	    }
 
             // top-right clipped chunk
-            if (chunkWorldCoord.x > canvas_A.x &&
-                chunkWorldCoord.y + configuration.chunkHeight < canvas_D.y &&
-                width < configuration.chunkWidth &&
-                height < configuration.chunkHeight) {
-                putLocation.x = 0;
+            if (chunkWorldCoord.x >= canvas_A.x &&
+                chunkWorldCoord.y + configuration.chunkHeight <= canvas_D.y &&
+                width < configuration.chunkWidth) {
+                    putLocation.x = 0;
             }
 
-            chunkUpdate(A, width, height, putLocation, chunk, key);
+            // ..simply load the chunk into the render context, nothing special here
+            drawing.offscreenRenderCtx.putImageData(chunk, 0, 0);
+            // ..now get the corresponding data from the canvas and put it into the chunk
+            // clear the chunk beforehand, otherwise transparent pixels (anti-aliasing) will accumulate
+            // resulting in ugly thick lines
+            drawing.offscreenRenderCtx.clearRect(putLocation.x, putLocation.y, width, height);
+            drawing.offscreenRenderCtx.drawImage(drawing.canvas, A.x, A.y, width, height, putLocation.x, putLocation.y, width, height);
+            // ..overwrite the storage chunk to the just rendered one
+            world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
         });
-
-        world.moveBy(0, 0);
     };
 
     world.moveBy = function(dx, dy, canvas) {
@@ -339,8 +316,7 @@ function handleMouseEvents(drawing, world) {
         }
     });
 
-    // replace with az-dragEnd >:(
-    canvas.addEventListener("mouseup", function(event) {
+    canvas.addEventListener("az-dragEnd", function(event) {
         if (event.which === MOUSE.left) {
             // there's a problem with update chunks, for a chunk it's possible to reside outside the canvas only halfway for example
             // when the canvas tries to update that chunk, it will overwrite his clipped data with 0's, you will lose the clipped data!
