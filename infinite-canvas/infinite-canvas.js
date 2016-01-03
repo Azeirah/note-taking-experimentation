@@ -51,7 +51,8 @@ function initializeWorld(drawing) {
         },
         width: drawing.canvas.width,
         height: drawing.canvas.height,
-        chunks: {}
+        chunks: {},
+        images: {}
     };
 
     function constructChunkKey(x, y) {
@@ -114,6 +115,8 @@ function initializeWorld(drawing) {
         // if the chunk doesn't exist, create it!
         if (Object.keys(world.chunks).indexOf(chunkKey) === -1) {
             world.chunks[chunkKey] = drawing.ctx.createImageData(configuration.chunkWidth, configuration.chunkHeight);
+        } else {
+
         }
 
         // now that we're sure that it exists, return the motherfucker <3
@@ -126,14 +129,29 @@ function initializeWorld(drawing) {
     });
 
     function renderChunks(chunks) {
-        var coords = Object.keys(chunks).map(parseChunkKey);
-
-        coords.forEach(function(coord) {
-            var chunk = getChunk(coord.x, coord.y);
+        Object.keys(chunks).forEach(function (key) {
+            var coord = parseChunkKey(key);
             var renderCoordinate = chunkCoordToRenderCoord(coord.x, coord.y);
 
-            drawing.ctx.putImageData(chunk, renderCoordinate.x, renderCoordinate.y);
+            if (Object.keys(world.images).indexOf(key) !== -1) {
+                // drawImage is IMMENSELY faster compared to putImageData
+                drawing.ctx.drawImage(world.images[key], renderCoordinate.x, renderCoordinate.y);
+            } else {
+                // fall back to putImageData if the createImageData is not supported in the browser
+                var chunk = getChunk(coord.x, coord.y);
+                drawing.ctx.putImageData(chunk, renderCoordinate.x, renderCoordinate.y);
+            }
         });
+        // var coords = Object.keys(chunks).map(parseChunkKey);
+
+        // coords.forEach(function(coord) {
+        //     var chunk = getChunk(coord.x, coord.y);
+        //     var renderCoordinate = chunkCoordToRenderCoord(coord.x, coord.y);
+
+        //     if (world.images[coord])
+
+        //     drawing.ctx.putImageData(chunk, renderCoordinate.x, renderCoordinate.y);
+        // });
     }
 
     function getChunksInViewport() {
@@ -220,6 +238,15 @@ function initializeWorld(drawing) {
             drawing.offscreenRenderCtx.drawImage(drawing.canvas, A.x, A.y, width, height, putLocation.x, putLocation.y, width, height);
             // ..overwrite the storage chunk to the just rendered one
             world.chunks[key] = drawing.offscreenRenderCtx.getImageData(0, 0, configuration.chunkWidth, configuration.chunkHeight);
+            // createImageBitmap gives us a HUGE performance increase during padding, use it if it's available
+            // I don't want to use this as a default, because even the latest version of chrome doesn't support it,
+            // only firefox dev edition does
+            // note that by using this, we're effectively doubling the amount of memory used per chunk.. not very nice
+            if (window.createImageBitmap) {
+                createImageBitmap(drawing.offscreenRenderCtx).then(function (bmp) {
+                    world.images[key] = bmp;
+                });
+            }
         });
     };
 
