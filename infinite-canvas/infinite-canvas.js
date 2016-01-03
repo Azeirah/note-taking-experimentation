@@ -164,24 +164,19 @@ function initializeWorld(drawing) {
     }
 
     world.updateChunks = function () {
-        // alternative approach, we use a second canvas
-        // 1. Create second canvas
-        // 2. for all chunks
-        //   2a. altCtx.putImageData(chunk)
-        //   2b. visibleData = ctx.getImageData(visible)
-        //   2c. altCtx.putImageData(visibleData, visible.x, visible.y)
-        //   2d. chunk = altCtx.getImageData(0, 0, chunkWidth, chunkHeight)
-        // this way we won't have to manually loop over all pixels (which is STUPIDLY slow)
-        // and we won't have to distinguish between clipping and visible chunks anymore,
-        // only determine the area that's visible, which is (A.x, A.y:D.x, D.y) for entirely visible chunks
         var chunks = getChunksInViewport();
 
         Object.keys(chunks).forEach(function (key) {
-            var coord       = parseChunkKey(key);
-            var renderCoord = chunkCoordToRenderCoord(coord.x, coord.y);
-            var chunk       = chunks[key];
+            var coord           = parseChunkKey(key);
+            var renderCoord     = chunkCoordToRenderCoord(coord.x, coord.y);
+            var chunk           = chunks[key];
+            var chunkWorldCoord = chunkCoordToWorldCoord(coord.x, coord.y);
 
-            // the Math.constrain calls are to ensure that we do not overwrite partially clipped chunks with whitespace
+
+            // A and D are only used to calculate the -clipped- width and height of a chunk, I am sure there's a far
+            // easier way to calculate the clipped width and height of a chunk
+            // but for now, this works, so it'll do
+
             // top-left
             var A = {
                 x: Math.constrain(renderCoord.x, 0, drawing.canvas.width),
@@ -204,64 +199,12 @@ function initializeWorld(drawing) {
                 y: configuration.chunkHeight - height
             };
 
-            var chunkWorldCoord = chunkCoordToWorldCoord(coord.x, coord.y);
-            var canvas_A = {
-                x: world.position.x,
-                y: world.position.y
-            };
-
-            var canvas_D = {
-                x: world.position.x + drawing.canvas.width,
-                y: world.position.y + drawing.canvas.height
-            };
-
-            // I know there's a LOT of redundancy down here
-            // I was having an extremely bad time figuring out how to deal with the clipped chunks
-            // in all cases, and I'm 100% certain I've missed at least one, but I haven't been able to reproduce it.
-            // at some point, the bottom-right clipping chunk was glitching out because of bad putLocation values
-            //
-            // I first want to make sure that all cases are covered, when I did that, I can get rid of all the
-            // heavily unnecessary redundancy here
-
-            // bottom-left clipped chunk
-            if (chunkWorldCoord.x <= canvas_A.x &&
-                chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
-                height < configuration.chunkHeight) {
-                putLocation.y = 0;
+            if (chunkWorldCoord.x >= world.position.x) {
+                putLocation.x = 0;
             }
 
-    	    // bottom-mid clipped chunk
-    	    if (chunkWorldCoord.x >= canvas_A.x &&
-        		chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
-        		width === configuration.chunkWidth &&
-        		height < configuration.chunkHeight) {
-        		putLocation.x = 0;
-        		putLocation.y = 0;
-    	    }
-
-    	    // bottom-right clipped chunk
-    	    if (chunkWorldCoord.x >= canvas_A.x &&
-    	        chunkWorldCoord.y + configuration.chunkHeight >= canvas_D.y &&
-        		width < configuration.chunkWidth &&
-        		height < configuration.chunkHeight) {
-                putLocation.x = 0;
-    		    putLocation.y = 0;
-    	    }
-
-    	    // middle-right clipped chunk
-            if (chunkWorldCoord.x >= canvas_A.x &&
-        		chunkWorldCoord.y + configuration.chunkHeight <= canvas_D.y &&
-        		width < configuration.chunkWidth &&
-        		height === configuration.chunkHeight) {
-                putLocation.x = 0;
-    	        putLocation.y = 0;
-    	    }
-
-            // top-right clipped chunk
-            if (chunkWorldCoord.x >= canvas_A.x &&
-                chunkWorldCoord.y + configuration.chunkHeight <= canvas_D.y &&
-                width < configuration.chunkWidth) {
-                    putLocation.x = 0;
+            if (chunkWorldCoord.y >= world.position.y) {
+                putLocation.y = 0;
             }
 
             // ..simply load the chunk into the render context, nothing special here
@@ -269,6 +212,10 @@ function initializeWorld(drawing) {
             // ..now get the corresponding data from the canvas and put it into the chunk
             // clear the chunk beforehand, otherwise transparent pixels (anti-aliasing) will accumulate
             // resulting in ugly thick lines
+            // after looking for bottlenecks, it showed that these two calls are significantly slower
+            // var drawData = drawing.ctx.getImageData(from.x, from.y, width, height);
+            // drawing.offscreenRenderCtx.putImageData(drawData, to.x, to.y);
+            // than the two used below. Especially the getImageData was extremely slow for some reason!
             drawing.offscreenRenderCtx.clearRect(putLocation.x, putLocation.y, width, height);
             drawing.offscreenRenderCtx.drawImage(drawing.canvas, A.x, A.y, width, height, putLocation.x, putLocation.y, width, height);
             // ..overwrite the storage chunk to the just rendered one
@@ -336,13 +283,3 @@ var drawing = initializeCanvas();
 var world = initializeWorld(drawing);
 
 handleMouseEvents(drawing, world);
-
-function findAllNonEmptyChunks() {
-    var keys = Object.keys(world.chunks).filter(function(chunkKey) {
-        return world.chunks[chunkKey].data.reduce(function(d, p) {
-            return d + p
-        }, 0) !== 0;
-    });
-
-    console.log(keys);
-}
