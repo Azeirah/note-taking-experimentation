@@ -86,8 +86,6 @@
             // if the chunk doesn't exist, create it!
             if (Object.keys(infinity.chunks).indexOf(chunkKey) === -1) {
                 infinity.chunks[chunkKey] = ctx.createImageData(configuration.chunkWidth, configuration.chunkHeight);
-            } else {
-
             }
 
             // now that we're sure that it exists, return the motherfucker <3
