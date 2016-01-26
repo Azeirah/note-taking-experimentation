@@ -1,8 +1,22 @@
 (function () {
     var configuration = {
-        chunkWidth: 384,
-        chunkHeight: 216
+        chunkWidth: 500,
+        chunkHeight: 500
     };
+
+    function chunkLoader(infinity) {
+        function loadChunkList(callback) {
+            // retrieves list of chunks that exist on the server
+            // timeouts are our pretend servers for now
+            setTimeout(function () {
+                callback(["0, 0", "0, 1", "-3, 2", "2, 3"]);
+            }, Math.random() * 1500 + 450);
+        }
+
+        function loadChunk(key, callback) {
+            // what are we going to receive? png? bmp?
+        }
+    }
 
     function initializeWorld(ctx) {
         var offscreenRenderCanvas    = document.createElement("canvas");
@@ -13,7 +27,7 @@
 
         var canvas                   = ctx.canvas;
 
-        // This function needs to take into account asynchronous loading of width, height and padding data later!
+        // This function needs to take into account asynchronous loading of position data later!
         var infinity = {
             position: {
                 x: 0,
@@ -57,23 +71,14 @@
         }
 
         function chunkCoordToRenderCoord(x, y) {
-            // returns the top-left coord; (0, 0) relative to the chunk
             return {
                 x: (x * configuration.chunkWidth) - infinity.position.x,
                 y: (y * configuration.chunkHeight) - infinity.position.y
             };
         }
 
-        function renderCoordToChunkCoord(x, y) {
-            // takes a point relative to the canvas, returns the coord of the chunk it's in
-            return {
-                x: Math.floor((x - infinity.position.x) / configuration.chunkWidth),
-                y: Math.floor((y - infinity.position.y) / configuration.chunkHeight)
-            };
-        }
-
         function getChunk(x, y) {
-            // we serialize the coordinate of a chunk with a key, computed from it's x and y coordinates
+            // we serialize the coordinate of a chunk with a key, computed from its x and y coordinates
             // say we have a chunk at {x: 1, y: 3}, then our chunks dict looks like
             // {
             //  ...
@@ -81,7 +86,6 @@
             //  ...
             // }
             var chunkKey = constructChunkKey(x, y);
-            var chunk;
 
             // if the chunk doesn't exist, create it!
             if (Object.keys(infinity.chunks).indexOf(chunkKey) === -1) {
@@ -115,12 +119,10 @@
             // what we need to do is find the coordinates of the chunks in the four corners
             // and then retrieve those chunks, as well as all chunks inbetween those corners
             var topLeft     = worldCoordToChunkCoord(infinity.position.x,                infinity.position.y);
-            var topRight    = worldCoordToChunkCoord(infinity.position.x + canvas.width, infinity.position.y);
-            var bottomLeft  = worldCoordToChunkCoord(infinity.position.x,                infinity.position.y + canvas.height);
             var bottomRight = worldCoordToChunkCoord(infinity.position.x + canvas.width, infinity.position.y + canvas.height);
 
-            var chunksOnXAxis = Math.abs(topRight.x - topLeft.x);
-            var chunksOnYAxis = Math.abs(topRight.y - bottomRight.y);
+            var chunksOnXAxis = Math.abs(topLeft.x - bottomRight.x);
+            var chunksOnYAxis = Math.abs(topLeft.y - bottomRight.y);
 
             // <= instead of < because we definitely need to include the outer layer of chunks as well!
             for (var x = 0; x <= chunksOnXAxis; x++) {
@@ -144,7 +146,7 @@
                 var chunkSourceCoord = {
                     x: Math.max(renderCoord.x, 0),
                     y: Math.max(renderCoord.y, 0)
-                }
+                };
 
                 var width  = Math.min(renderCoord.x + configuration.chunkWidth , canvas.width)  - chunkSourceCoord.x;
                 var height = Math.min(renderCoord.y + configuration.chunkHeight, canvas.height) - chunkSourceCoord.y;
@@ -208,7 +210,7 @@
                 var chunksToRender = getChunksInViewport();
                 renderChunks(chunksToRender);
             }
-        }
+        };
 
         return infinity;
     }

@@ -65,4 +65,27 @@ function handleMouseEvents(ctx, infiniteCanvas) {
 var ctx = initializeCanvas();
 var infinity = infiniteCanvas.initialize(ctx);
 
+ctx.lineJoin = "round";
+ctx.lineCap = "round";
+ctx.lineWidth = 14;
+
 handleMouseEvents(ctx, infinity);
+
+createCircularMenu({
+    data: [
+        {color: "black", pencil: true},
+        {color: "green", pencil: true},
+        {color: "orangered", pencil: true},
+        {color: "white", eraser: true}
+    ],
+    radius: 40,
+    menuSelectionHandler: function (selection) {
+        if (selection.pencil) {
+            ctx.strokeStyle = selection.color;
+            ctx.lineWidth = 2;
+        } else if (selection.eraser) {
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 65;
+        }
+    }
+});

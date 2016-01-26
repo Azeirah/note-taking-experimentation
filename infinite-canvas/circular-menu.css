@@ -1,0 +1,12 @@
+svg {
+    z-index: 9999;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.circularMenuSelected {
+  transition: .2s all;
+  transform: scale(1.05);
+}
