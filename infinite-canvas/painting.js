@@ -67,7 +67,6 @@ var infinity = infiniteCanvas.initialize(ctx);
 
 ctx.lineJoin = "round";
 ctx.lineCap = "round";
-ctx.lineWidth = 14;
 
 handleMouseEvents(ctx, infinity);
 
