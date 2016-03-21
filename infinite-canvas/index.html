@@ -9,6 +9,12 @@
             margin: 0;
             overflow: hidden;
         }
+
+        object, param {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
     </style>
 
     <link rel="stylesheet" href="circular-menu.css">
@@ -18,8 +24,20 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
     <script src="shims.js"></script>
     <script src="circular-menu.js"></script>
+    <script src="toolbox.js"></script>
+    <script src="user-interface.js"></script>
+    <script src="wacom.js"></script>
+
 </head>
 <body>
+    <object id="wtPlugin" type="application/x-wacomtabletplugin">
+          <param name="onload" value="pluginLoaded">
+    </object>
+
     <script src="painting.js"></script>
+
+    <!-- brushes -->
+    <script src="brushes/pencil.js"></script>
+    <script src="brushes/eraser.js"></script>
 </body>
 </html>

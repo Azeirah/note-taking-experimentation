@@ -1,4 +1,5 @@
 function fitCanvasToScreen(canvas) {
+    console.log("resizing canvas! emptying screen");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
@@ -15,76 +16,12 @@ function initializeCanvas() {
     document.body.appendChild(canvas);
 
     var ctx = canvas.getContext("2d");
-    ctx.lineWidth = 2;
 
     return ctx;
 }
 
-function handleMouseEvents(ctx, infiniteCanvas) {
-    var canvas = ctx.canvas;
+var ctx            = initializeCanvas();
+var infinity       = infiniteCanvas.initialize(ctx);
 
-    function padTheWorld(event) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        infiniteCanvas.moveBy(-event.dx, -event.dy);
-    }
-
-    function drawALine(event) {
-        ctx.beginPath();
-        ctx.moveTo(event.previousMousePosition.clientX, event.previousMousePosition.clientY);
-        ctx.lineTo(event.clientX, event.clientY);
-        ctx.stroke();
-    }
-
-    window.addEventListener("resize", function() {
-        // moving forces a rerender
-        infiniteCanvas.moveBy(0, 0);
-    });
-
-    canvas.addEventListener("az-drag", function(event) {
-        if (event.which === MOUSE.middle) {
-            padTheWorld(event);
-        } else if (event.which === MOUSE.left) {
-            drawALine(event);
-        }
-    });
-
-    canvas.addEventListener("az-dragEnd", function(event) {
-        if (event.which === MOUSE.left) {
-            infiniteCanvas.updateChunks();
-        }
-    });
-
-    // prevents the annoying scrolling popup thing on middle mouse click
-    window.addEventListener("mousedown", function(event) {
-        if (event.which === MOUSE.middle) {
-            event.preventDefault();
-        }
-    });
-}
-
-var ctx = initializeCanvas();
-var infinity = infiniteCanvas.initialize(ctx);
-
-ctx.lineJoin = "round";
-ctx.lineCap = "round";
-
-handleMouseEvents(ctx, infinity);
-
-createCircularMenu({
-    data: [
-        {color: "black", pencil: true},
-        {color: "green", pencil: true},
-        {color: "orangered", pencil: true},
-        {color: "white", eraser: true}
-    ],
-    radius: 40,
-    menuSelectionHandler: function (selection) {
-        if (selection.pencil) {
-            ctx.strokeStyle = selection.color;
-            ctx.lineWidth = 2;
-        } else if (selection.eraser) {
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 65;
-        }
-    }
-});
+var toolbox        = new Toolbox(ctx);
+var user_interface = new InfiniteCanvasUserInterface(infinity, ctx, toolbox);

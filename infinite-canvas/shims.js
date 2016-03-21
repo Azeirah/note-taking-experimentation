@@ -1,5 +1,5 @@
-// stole this code from.. somewhere? stackoverflow I think
-// (not from stackoverflow post, but literally from the stackoverflow page itself its sourcecode! :)
+// Stole this code from stackoverflow
+// Not from a stackoverflow post, but literally from stackoverflow's source code
 String.prototype.format = function() {
     "use strict";
     var e = this.toString();
