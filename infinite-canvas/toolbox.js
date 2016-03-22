@@ -43,7 +43,7 @@ function Toolbox(ctx) {
 
 	// defaults
 	// properties like color and radius actually belong to the brushes themselves.
-	toolbox.setRadius(3);
+	toolbox.setRadius(2);
 	toolbox.setColor("black");
 
 	canvas.addEventListener("az-drag", function(event) {
